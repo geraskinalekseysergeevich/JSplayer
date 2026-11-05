@@ -11,6 +11,24 @@ html, body { background: #642020; }
     z-index: 0;
 }
 
+/* Резервируем место под обложку и строки текста, пока они грузятся:
+   иначе вся карточка «прыгает», когда приходит картинка и название. */
+.song_img {
+    aspect-ratio: 1 / 1;
+    border-radius: 5px;
+    background: #642020;
+    overflow: hidden;
+}
+.song_img .song_img_src {
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.35s;
+}
+.song_img .song_img_src.loaded { opacity: 1; }
+.song_title { min-height: 21px; }
+.autor { min-height: 12px; }
+
 /* название и исполнитель в одну строку: карточка рассчитана на одну строку названия,
    с двумя строками нижний отступ съедался. Полный текст виден во всплывающей подсказке. */
 .song_title, .autor { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

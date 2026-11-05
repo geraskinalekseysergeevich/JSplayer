@@ -72,8 +72,11 @@ function loadSong(index) {
     const t = queue[index]
     song_title.textContent = song_title.title = t.title
     songAutor.textContent = songAutor.title = t.artist
-    song_img_src.src = t.cover || PLACEHOLDER
+    // обложка плавно появляется, когда догрузится; до этого виден фон нужного размера
+    song_img_src.classList.remove('loaded')
+    song_img_src.onload = () => song_img_src.classList.add('loaded')
     song_img_src.onerror = () => { song_img_src.onerror = null; song_img_src.src = PLACEHOLDER }
+    song_img_src.src = t.cover || PLACEHOLDER
     audio.src = t.src
     songDuration.textContent = formatTime(t.duration)
     currentSongTime.textContent = '0:00'
