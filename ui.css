@@ -43,9 +43,7 @@ html, body { background: #642020; }
     z-index: 20;
     display: flex;
     flex-direction: column;
-    background: rgba(60, 22, 22, 0.88);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(60, 22, 22, 0.92);
     border-radius: 24px;
     padding: 16px;
     color: #fff;
@@ -157,9 +155,7 @@ html, body { background: #642020; }
     gap: 4px;
     padding: 6px;
     border-radius: 16px;
-    background: rgba(60, 22, 22, 0.88);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(60, 22, 22, 0.92);
 }
 .modes button {
     border: 0;

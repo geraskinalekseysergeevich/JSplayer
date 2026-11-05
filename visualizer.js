@@ -102,7 +102,9 @@ window.JSP = window.JSP || {}
         setPalette(p) { this.target = p || DEFAULT_PALETTE }
 
         resize() {
-            const dpr = Math.min(window.devicePixelRatio || 1, 2)
+            // Рендерим в 1x даже на Retina: сцена из плавных градиентов и форм не теряет в чёткости,
+            // зато заливка экрана в 4 раза дешевле (на 2880x1800 интерфейс заметно тормозил)
+            const dpr = 1
             this.w = window.innerWidth
             this.h = window.innerHeight
             this.canvas.width = this.w * dpr
