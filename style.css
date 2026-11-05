@@ -45,7 +45,6 @@
     align-items: flex-end;
 }
 .player {
-    width: 400px;
     background: #3C1616;
     padding: 27px 27px 27px 27px;
     border-radius: 32px;
@@ -55,9 +54,6 @@
     margin-bottom: -200px;
     filter: drop-shadow(15px 15px 15px rgba(0, 0, 0, 10));
 }
-@media (min-width: 1280px) {
-    }
-
 .song_data {
     padding-left: 6px;
     padding-top: 33px;

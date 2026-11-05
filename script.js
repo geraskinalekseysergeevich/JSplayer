@@ -1,7 +1,10 @@
+// JSplayer: логика плеера и связка с визуализацией, поиском и текстами.
+// Зависит от api.js, lyrics.js, visualizer.js (общий объект JSP).
+
 const player = document.querySelector('.player'),
     audio = document.querySelector('.audio'),
-    song_title = document.querySelector('.song_title'),
-    song_img_src = document.querySelector('.song_img_src'),
+    songTitle = document.querySelector('.song_title'),
+    songImg = document.querySelector('.song_img_src'),
     songAutor = document.querySelector('.autor'),
     progressBar = document.querySelector('.progress_bar'),
     progress = document.querySelector('.progress'),
@@ -9,7 +12,7 @@ const player = document.querySelector('.player'),
     nextBtn = document.querySelector('.next'),
     playBtn = document.querySelector('.play'),
     shuffleBtn = document.querySelector('.shuffle'),
-    btn_img = document.querySelector('.play_btn'),
+    playImg = document.querySelector('.play_btn'),
     volumeBtn = document.querySelector('.sound_btn'),
     songDuration = document.querySelector('.duration'),
     currentSongTime = document.querySelector('.current_time'),
@@ -28,11 +31,16 @@ const PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent(
     '<path d="M140 270V150l130-30v120" fill="none" stroke="#D33D34" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>' +
     '<circle cx="118" cy="272" r="24" fill="#D33D34"/><circle cx="248" cy="242" r="24" fill="#D33D34"/></svg>')
 
+// ---------- настройки ----------
+const LIST_SIZE = 25 // сколько треков запрашиваем у каждого сервиса
+const SEARCH_DELAY = 350 // мс паузы после ввода перед поиском
+const SEEK_STEP = 5 // секунд на стрелки влево/вправо
+
 // ---------- состояние ----------
-let queue = []
-let song_index = -1
+let queue = [] // текущий список треков
+let songIndex = -1 // позиция играющего трека в queue
 let shuffle = false
-let history = []
+let history = [] // индексы уже сыгранных треков для кнопки «назад»
 let context, analyser
 
 // ---------- визуализация ----------
@@ -68,15 +76,15 @@ function formatTime(seconds) {
 
 // ---------- загрузка трека ----------
 function loadSong(index) {
-    song_index = index
+    songIndex = index
     const t = queue[index]
-    song_title.textContent = song_title.title = t.title
+    songTitle.textContent = songTitle.title = t.title
     songAutor.textContent = songAutor.title = t.artist
     // обложка плавно появляется, когда догрузится; до этого виден фон нужного размера
-    song_img_src.classList.remove('loaded')
-    song_img_src.onload = () => song_img_src.classList.add('loaded')
-    song_img_src.onerror = () => { song_img_src.onerror = null; song_img_src.src = PLACEHOLDER }
-    song_img_src.src = t.cover || PLACEHOLDER
+    songImg.classList.remove('loaded')
+    songImg.onload = () => songImg.classList.add('loaded')
+    songImg.onerror = () => { songImg.onerror = null; songImg.src = PLACEHOLDER }
+    songImg.src = t.cover || PLACEHOLDER
     audio.src = t.src
     songDuration.textContent = formatTime(t.duration)
     currentSongTime.textContent = '0:00'
@@ -84,7 +92,7 @@ function loadSong(index) {
     document.title = `${t.title} · ${t.artist}`
 
     JSP.paletteFromImage(t.cover).then(p => {
-        if (queue[song_index] === t) viz.setPalette(p)
+        if (queue[songIndex] === t) viz.setPalette(p)
     })
     JSP.lyrics.load(t)
     updateMediaSession(t)
@@ -97,7 +105,7 @@ function playSong() {
     if (!context) preparation()
     if (context.state === 'suspended') context.resume()
     player.classList.add('played')
-    btn_img.src = 'icons/pause.svg'
+    playImg.src = 'icons/pause.svg'
     viz.setPlaying(true)
     audio.play().catch(err => {
         if (err.name !== 'AbortError') toast('Не получилось запустить трек')
@@ -108,18 +116,18 @@ function playSong() {
 function pauseSong() {
     player.classList.remove('played')
     audio.pause()
-    btn_img.src = 'icons/play.svg'
+    playImg.src = 'icons/play.svg'
     viz.setPlaying(false)
 }
 
 function nextSong() {
     if (!queue.length) return
-    if (song_index >= 0) history.push(song_index)
+    if (songIndex >= 0) history.push(songIndex)
     let n
     if (shuffle && queue.length > 1) {
-        do { n = Math.floor(Math.random() * queue.length) } while (n === song_index)
+        do { n = Math.floor(Math.random() * queue.length) } while (n === songIndex)
     } else {
-        n = (song_index + 1) % queue.length
+        n = (songIndex + 1) % queue.length
     }
     loadSong(n)
     playSong()
@@ -131,13 +139,13 @@ function prevSong() {
     if (audio.currentTime > 3) { audio.currentTime = 0; return }
     let n
     if (history.length) n = history.pop()
-    else n = (song_index - 1 + queue.length) % queue.length
+    else n = (songIndex - 1 + queue.length) % queue.length
     loadSong(n)
     playSong()
 }
 
 function playIndex(i) {
-    if (song_index >= 0) history.push(song_index)
+    if (songIndex >= 0) history.push(songIndex)
     loadSong(i)
     playSong()
 }
@@ -257,7 +265,7 @@ function renderList(tracks, title) {
 }
 
 function markActive() {
-    trackList.querySelectorAll('li').forEach(li => li.classList.toggle('on', +li.dataset.i === song_index))
+    trackList.querySelectorAll('li').forEach(li => li.classList.toggle('on', +li.dataset.i === songIndex))
 }
 
 trackList.addEventListener('click', e => {
@@ -267,21 +275,22 @@ trackList.addEventListener('click', e => {
     setPanel(false)
 })
 
-function setQueue(tracks, title, autoload) {
+// Подменяем очередь, сохраняя позицию играющего трека, если он есть в новом списке
+function setQueue(tracks, title) {
+    const current = queue[songIndex]
     queue = tracks
     history = []
-    song_index = -1
+    songIndex = current ? tracks.findIndex(t => t.id === current.id) : -1
     renderList(tracks, title)
-    if (autoload && tracks.length) loadSong(0)
 }
 
 async function showTrending() {
     try {
-        const tracks = await JSP.music.trending(25)
-        setQueue(tracks, 'Trending', true)
+        setQueue(await JSP.music.trending(LIST_SIZE), 'Trending')
+        // первый запуск: готовим первый трек, но не включаем (браузер всё равно заблокирует автозвук)
+        if (!audio.src && queue.length) loadSong(0)
     } catch (e) {
-        renderList([], 'Trending')
-        toast('Не удалось загрузить треки. Проверь интернет')
+        if (!queue.length) toast('Не удалось загрузить треки. Проверь интернет')
     }
 }
 
@@ -291,29 +300,14 @@ searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer)
     const q = searchInput.value.trim()
     searchTimer = setTimeout(async () => {
-        if (!q) return showTrendingList()
+        if (!q) return showTrending()
         try {
-            const tracks = await JSP.music.search(q, 25)
-            const current = queue[song_index]
-            queue = tracks
-            history = []
-            song_index = current ? tracks.findIndex(t => t.id === current.id) : -1
-            renderList(tracks, `Results for “${q}”`)
+            setQueue(await JSP.music.search(q, LIST_SIZE), `Results for “${q}”`)
         } catch (e) {
             toast('Поиск не сработал, попробуй ещё раз')
         }
-    }, 350)
+    }, SEARCH_DELAY)
 })
-async function showTrendingList() {
-    try {
-        const tracks = await JSP.music.trending(25)
-        const current = queue[song_index]
-        queue = tracks
-        history = []
-        song_index = current ? tracks.findIndex(t => t.id === current.id) : -1
-        renderList(tracks, 'Trending')
-    } catch (e) { /* оставляем текущий список */ }
-}
 
 // на узких экранах список выезжает панелью; кнопка Tracks прячется, пока панель открыта
 function setPanel(open) {
@@ -341,8 +335,8 @@ document.addEventListener('keydown', e => {
     if (e.target.matches('input, textarea') || e.metaKey || e.ctrlKey || e.altKey) return
     switch (e.key) {
         case ' ': e.preventDefault(); playBtn.click(); break
-        case 'ArrowRight': audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 5); break
-        case 'ArrowLeft': audio.currentTime = Math.max(0, audio.currentTime - 5); break
+        case 'ArrowRight': audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + SEEK_STEP); break
+        case 'ArrowLeft': audio.currentTime = Math.max(0, audio.currentTime - SEEK_STEP); break
         case 'ArrowUp': e.preventDefault(); changeVolume(0.1); break
         case 'ArrowDown': e.preventDefault(); changeVolume(-0.1); break
         case 'n': case 'N': nextSong(); break

@@ -77,14 +77,13 @@ window.JSP = window.JSP || {}
             this.mode = 'bars'
             this.analyser = null
             this.playing = false
-                        this.target = DEFAULT_PALETTE
+            this.target = DEFAULT_PALETTE
             this.pal = { sky: [...DEFAULT_PALETTE.sky], ground: [...DEFAULT_PALETTE.ground], accent: [...DEFAULT_PALETTE.accent] }
             this.bars = new Float32Array(BARS)
             this.particles = []
             this.beat = 0
             this.bassAvg = 0
             this.lastBeat = 0
-            this.rot = 0
             this.resize = this.resize.bind(this)
             this.frame = this.frame.bind(this)
             window.addEventListener('resize', this.resize)
@@ -104,15 +103,11 @@ window.JSP = window.JSP || {}
         resize() {
             // Рендерим в 1x даже на Retina: сцена из плавных градиентов и форм не теряет в чёткости,
             // зато заливка экрана в 4 раза дешевле (на 2880x1800 интерфейс заметно тормозил)
-            const dpr = 1
-            this.w = window.innerWidth
-            this.h = window.innerHeight
-            this.canvas.width = this.w * dpr
-            this.canvas.height = this.h * dpr
-            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+            this.w = this.canvas.width = window.innerWidth
+            this.h = this.canvas.height = window.innerHeight
         }
 
-        // Обновляем данные: сглаженные столбики, пики, бас и бит
+        // Обновляем данные: сглаженные полосы спектра, бас и бит
         analyse(ts) {
             const live = this.analyser && this.playing
             if (live) {
@@ -123,7 +118,7 @@ window.JSP = window.JSP || {}
             for (let i = 0; i < BARS; i++) {
                 let t = 0
                 if (live) {
-                    // логарифмическая раскладка: больше столбиков на басах
+                    // логарифмическая раскладка: больше полос на басах
                     const a = Math.floor(Math.pow(i / BARS, 1.7) * maxBin)
                     const b = Math.max(a + 1, Math.floor(Math.pow((i + 1) / BARS, 1.7) * maxBin))
                     let s = 0
@@ -149,7 +144,6 @@ window.JSP = window.JSP || {}
                 this.emit(10 + Math.round(bass * 14))
             }
             this.beat *= 0.9
-            this.bass = bass
         }
 
         // всплеск частиц на бит (режим sparks)
@@ -183,7 +177,6 @@ window.JSP = window.JSP || {}
             const { w, h } = this
             const { sky, ground, accent } = this.pal
 
-            c.clearRect(0, 0, w, h)
             c.fillStyle = rgb(sky)
             c.fillRect(0, 0, w, h)
             c.fillStyle = rgb(ground)
@@ -280,7 +273,7 @@ window.JSP = window.JSP || {}
         // Wave: три плавные волны, амплитуда каждой зависит от своей полосы частот (бас, середина, верх)
         drawWave(c, L, ts) {
             const { w } = this
-            const { accent, ground } = this.pal
+            const { accent } = this.pal
             const avg = (a, b) => {
                 let s = 0
                 for (let i = a; i < b; i++) s += this.bars[i]
@@ -379,7 +372,7 @@ window.JSP = window.JSP || {}
 
         // Sparks: без столбиков, фонтан искр; высота и частота зависят от силы каждой частоты
         drawSparks(c, L) {
-            const { accent, ground } = this.pal
+            const { accent } = this.pal
             const half = this.w / 2
             const inner = L.cardHalfW
             const bw = (half - inner) / BARS
