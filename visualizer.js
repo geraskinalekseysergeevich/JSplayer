@@ -80,7 +80,6 @@ window.JSP = window.JSP || {}
                         this.target = DEFAULT_PALETTE
             this.pal = { sky: [...DEFAULT_PALETTE.sky], ground: [...DEFAULT_PALETTE.ground], accent: [...DEFAULT_PALETTE.accent] }
             this.bars = new Float32Array(BARS)
-            this.peaks = new Float32Array(BARS)
             this.particles = []
             this.beat = 0
             this.bassAvg = 0
@@ -134,7 +133,6 @@ window.JSP = window.JSP || {}
                 }
                 t = clamp(t, 0, 1)
                 this.bars[i] += (t - this.bars[i]) * (t > this.bars[i] ? 0.55 : 0.12)
-                this.peaks[i] = Math.max(this.bars[i], this.peaks[i] - 0.006)
             }
             // бит: резкий скачок баса относительно скользящего среднего
             let bass = 0
@@ -156,7 +154,7 @@ window.JSP = window.JSP || {}
         emit(n) {
             if (this.mode !== 'sparks') return
             const { horizon } = this.getLayout()
-            for (let i = 0; i < n && this.particles.length < 700; i++) {
+            for (let i = 0; i < n && this.particles.length < 150; i++) {
                 this.particles.push({
                     x: Math.random() * this.w,
                     y: horizon,
@@ -204,32 +202,75 @@ window.JSP = window.JSP || {}
             else this.drawBars(c, L)
         }
 
+        // Bars: цельный плавный «горный хребет» спектра с градиентом, контуром и отражением
         drawBars(c, L) {
             const { w } = this
             const { ground, accent } = this.pal
-            // столбики начинаются у края карточки, чтобы басы не прятались под ней
             const half = w / 2
-            const inner = L.cardHalfW
-            const bw = (half - inner) / BARS
+            const inner = L.cardHalfW // силуэт начинается у края карточки, чтобы басы не прятались под ней
+            const span = half - inner
             const maxH = L.horizon * 0.82
+            // лёгкое сглаживание соседних полос, чтобы линия была гладкой
+            const v = new Float32Array(BARS)
             for (let i = 0; i < BARS; i++) {
-                const bh = this.bars[i] * maxH
-                const ph = this.peaks[i] * maxH
-                const gap = Math.min(2, bw * 0.2)
-                for (const side of [-1, 1]) {
-                    const x = side === 1 ? half + inner + i * bw : half - inner - (i + 1) * bw
-                    // столбик растёт вверх от линии горизонта
-                    c.fillStyle = rgb(ground)
-                    c.fillRect(x, L.horizon - bh, bw - gap, bh)
-                    // отражение в «земле»
-                    const rg = c.createLinearGradient(0, L.horizon, 0, L.horizon + bh * 0.45)
-                    rg.addColorStop(0, rgb(accent, 0.22))
-                    rg.addColorStop(1, rgb(accent, 0))
-                    c.fillStyle = rg
-                    c.fillRect(x, L.horizon, bw - gap, bh * 0.45)
-                    // «падающая» вершина
-                    c.fillStyle = rgb(accent, 0.9)
-                    c.fillRect(x, L.horizon - ph - 3, bw - gap, 2.5)
+                const a = this.bars[Math.max(0, i - 1)], b = this.bars[i], d = this.bars[Math.min(BARS - 1, i + 1)]
+                v[i] = (a + 2 * b + d) / 4
+            }
+            const curve = pts => {
+                for (let k = 1; k < pts.length - 1; k++) {
+                    const mx = (pts[k][0] + pts[k + 1][0]) / 2, my = (pts[k][1] + pts[k + 1][1]) / 2
+                    c.quadraticCurveTo(pts[k][0], pts[k][1], mx, my)
+                }
+                const last = pts[pts.length - 1]
+                c.lineTo(last[0], last[1])
+            }
+            for (const side of [-1, 1]) {
+                const X = d => half + side * (inner + d)
+                const up = [[X(0), L.horizon - v[0] * maxH]]
+                const down = [[X(0), L.horizon + v[0] * maxH * 0.35]]
+                for (let i = 0; i < BARS; i++) {
+                    const d = ((i + 0.5) / BARS) * span
+                    const fall = 1 - 0.45 * Math.pow(i / BARS, 2.2) // к краям экрана хребет плавно опускается
+                    up.push([X(d), L.horizon - v[i] * maxH * fall])
+                    down.push([X(d), L.horizon + v[i] * maxH * fall * 0.35])
+                }
+                up.push([X(span + 12), L.horizon])
+                down.push([X(span + 12), L.horizon])
+
+                // основная масса
+                c.beginPath()
+                c.moveTo(half, L.horizon)
+                c.lineTo(up[0][0], up[0][1])
+                curve(up)
+                c.lineTo(X(span + 12), L.horizon)
+                c.closePath()
+                const g = c.createLinearGradient(0, L.horizon - maxH, 0, L.horizon)
+                g.addColorStop(0, rgb(accent, 0.95))
+                g.addColorStop(1, rgb(ground, 1))
+                c.fillStyle = g
+                c.fill()
+
+                // отражение в «земле»
+                c.beginPath()
+                c.moveTo(half, L.horizon)
+                c.lineTo(down[0][0], down[0][1])
+                curve(down)
+                c.closePath()
+                const rg = c.createLinearGradient(0, L.horizon, 0, L.horizon + maxH * 0.35)
+                rg.addColorStop(0, rgb(accent, 0.3))
+                rg.addColorStop(1, rgb(accent, 0))
+                c.fillStyle = rg
+                c.fill()
+
+                // контур: широкий мягкий слой и тонкий яркий
+                for (const [lw, al] of [[7, 0.18], [2.2, 0.95]]) {
+                    c.beginPath()
+                    c.moveTo(up[0][0], up[0][1])
+                    curve(up)
+                    c.lineWidth = lw
+                    c.lineJoin = 'round'
+                    c.strokeStyle = rgb(accent, al)
+                    c.stroke()
                 }
             }
         }
@@ -270,17 +311,16 @@ window.JSP = window.JSP || {}
                 c.fillStyle = rgb(accent, l.alpha * 0.16)
                 c.fill()
                 // контур с свечением
-                c.shadowColor = rgb(accent, 0.8)
-                c.shadowBlur = 14
-                c.lineWidth = 2
-                c.strokeStyle = rgb(accent, l.alpha)
-                c.beginPath()
-                top.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y)))
-                c.stroke()
-                c.beginPath()
-                bot.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y)))
-                c.stroke()
-                c.shadowBlur = 0
+                for (const [lw, al] of [[8, 0.12], [2, 1]]) {
+                    c.lineWidth = lw
+                    c.strokeStyle = rgb(accent, l.alpha * al)
+                    c.beginPath()
+                    top.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y)))
+                    c.stroke()
+                    c.beginPath()
+                    bot.forEach(([x, y], k) => (k ? c.lineTo(x, y) : c.moveTo(x, y)))
+                    c.stroke()
+                }
             }
             c.restore()
         }
@@ -317,6 +357,24 @@ window.JSP = window.JSP || {}
             c.restore()
         }
 
+        // Спрайт мягкого свечения: рисуется один раз на цвет, дешевле shadowBlur в разы
+        glowSprite(color) {
+            const key = color.map(v => v >> 4).join()
+            if (this.spriteKey === key) return this.sprite
+            const c = document.createElement('canvas')
+            c.width = c.height = 32
+            const x = c.getContext('2d')
+            const g = x.createRadialGradient(16, 16, 0, 16, 16, 16)
+            g.addColorStop(0, rgb([255, 255, 255], 1))
+            g.addColorStop(0.18, rgb(color, 0.9))
+            g.addColorStop(1, rgb(color, 0))
+            x.fillStyle = g
+            x.fillRect(0, 0, 32, 32)
+            this.spriteKey = key
+            this.sprite = c
+            return c
+        }
+
         // Sparks: без столбиков, фонтан искр; высота и частота зависят от силы каждой частоты
         drawSparks(c, L) {
             const { accent, ground } = this.pal
@@ -331,7 +389,7 @@ window.JSP = window.JSP || {}
             c.fillStyle = g
             c.fillRect(0, L.horizon - 60, this.w, 90)
 
-            if (this.playing && this.particles.length < 700) {
+            if (this.playing && this.particles.length < 150) {
                 for (let i = 0; i < BARS; i++) {
                     const v = this.bars[i]
                     if (v < 0.2 || Math.random() > v * v * 0.2) continue
@@ -342,11 +400,12 @@ window.JSP = window.JSP || {}
                         vx: (Math.random() - 0.5) * 5,
                         vy: -(3 + v * 12 * (0.6 + Math.random() * 0.6)),
                         life: 1,
-                        decay: 0.006 + Math.random() * 0.01,
+                        decay: 0.009 + Math.random() * 0.012,
                         size: 3 + v * 5
                     })
                 }
             }
+            const sprite = this.glowSprite(accent)
             c.save()
             c.globalCompositeOperation = 'lighter'
             this.particles = this.particles.filter(p => p.life > 0 && p.y < this.h + 40)
@@ -357,14 +416,10 @@ window.JSP = window.JSP || {}
                 p.life -= p.decay
                 const a = clamp(p.life, 0, 1)
                 // светящаяся точка с коротким хвостом
-                c.fillStyle = rgb(accent, a)
-                c.shadowColor = rgb(accent, 0.9)
-                c.shadowBlur = 10
-                c.beginPath()
-                c.arc(p.x, p.y, p.size * (0.3 + a * 0.7), 0, Math.PI * 2)
-                c.fill()
+                const r = p.size * (0.3 + a * 0.7) * 2.6
+                c.globalAlpha = a
+                c.drawImage(sprite, p.x - r, p.y - r, r * 2, r * 2)
             }
-            c.shadowBlur = 0
             c.restore()
         }
     }

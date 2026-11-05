@@ -70,8 +70,8 @@ function formatTime(seconds) {
 function loadSong(index) {
     song_index = index
     const t = queue[index]
-    song_title.textContent = t.title
-    songAutor.textContent = t.artist
+    song_title.textContent = song_title.title = t.title
+    songAutor.textContent = songAutor.title = t.artist
     song_img_src.src = t.cover || PLACEHOLDER
     song_img_src.onerror = () => { song_img_src.onerror = null; song_img_src.src = PLACEHOLDER }
     audio.src = t.src
