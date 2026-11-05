@@ -261,7 +261,7 @@ trackList.addEventListener('click', e => {
     const li = e.target.closest('li[data-i]')
     if (!li) return
     playIndex(+li.dataset.i)
-    panel.classList.remove('open')
+    setPanel(false)
 })
 
 function setQueue(tracks, title, autoload) {
@@ -312,12 +312,16 @@ async function showTrendingList() {
     } catch (e) { /* оставляем текущий список */ }
 }
 
-document.getElementById('panel_open').addEventListener('click', () => panel.classList.add('open'))
-document.getElementById('panel_close').addEventListener('click', () => panel.classList.remove('open'))
+// на узких экранах список выезжает панелью; кнопка Tracks прячется, пока панель открыта
+function setPanel(open) {
+    panel.classList.toggle('open', open)
+    document.body.classList.toggle('panel-open', open)
+}
+document.getElementById('panel_open').addEventListener('click', () => setPanel(true))
+document.getElementById('panel_close').addEventListener('click', () => setPanel(false))
 
 // ---------- режимы визуализации ----------
 const modesEl = document.getElementById('modes')
-const colorToggle = document.getElementById('color_toggle')
 function setMode(m) {
     viz.setMode(m)
     modesEl.querySelectorAll('[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m))
@@ -326,11 +330,6 @@ function setMode(m) {
 modesEl.addEventListener('click', e => {
     const b = e.target.closest('[data-mode]')
     if (b) setMode(b.dataset.mode)
-})
-colorToggle.addEventListener('click', () => {
-    const on = !colorToggle.classList.contains('on')
-    colorToggle.classList.toggle('on', on)
-    viz.setUseCover(on)
 })
 try { setMode(localStorage.getItem('jsplayer.mode') || 'bars') } catch (e) { setMode('bars') }
 

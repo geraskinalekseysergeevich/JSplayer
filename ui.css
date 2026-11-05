@@ -150,7 +150,6 @@ html, body { background: #642020; }
 }
 .modes button:hover { color: #fff; }
 .modes button.on { background: rgba(255, 255, 255, 0.16); color: #fff; }
-.modes .sep { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.2); margin: 0 4px; }
 .modes button:focus-visible, .icon_btn:focus-visible, .fab:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 .credits {
@@ -178,6 +177,8 @@ html, body { background: #642020; }
     font-size: 14px;
     cursor: pointer;
 }
+
+.panel-open .fab { display: none; }
 
 .toast {
     position: fixed;
