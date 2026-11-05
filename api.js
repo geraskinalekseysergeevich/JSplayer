@@ -61,9 +61,13 @@ window.JSP = window.JSP || {}
                 imagesize: '500',
                 ...params
             })
-            const { headers, results } = await getJson(`${this.base}/tracks/?${q}`)
-            if (headers && headers.status !== 'success') throw new Error(headers.error_message)
-            return results.filter(t => t.audio).map(t => this.normalize(t))
+            // Jamendo иногда отвечает success с пустым списком, поэтому повторяем до 3 раз
+            for (let attempt = 0; attempt < 3; attempt++) {
+                const { headers, results } = await getJson(`${this.base}/tracks/?${q}`)
+                if (headers && headers.status !== 'success') throw new Error(headers.error_message)
+                if (results.length) return results.filter(t => t.audio).map(t => this.normalize(t))
+            }
+            return []
         },
         trending(limit) { return this.fetchTracks({ limit, order: 'popularity_week' }) },
         search(query, limit) { return this.fetchTracks({ limit, search: query }) }
