@@ -111,7 +111,7 @@ function pauseSong() {
 
 function nextSong() {
     if (!queue.length) return
-    history.push(song_index)
+    if (song_index >= 0) history.push(song_index)
     let n
     if (shuffle && queue.length > 1) {
         do { n = Math.floor(Math.random() * queue.length) } while (n === song_index)
@@ -134,7 +134,7 @@ function prevSong() {
 }
 
 function playIndex(i) {
-    history.push(song_index)
+    if (song_index >= 0) history.push(song_index)
     loadSong(i)
     playSong()
 }
