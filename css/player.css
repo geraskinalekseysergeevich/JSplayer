@@ -1,0 +1,178 @@
+/* Карточка плеера. Дизайн оригинала (см. Figma-макет) не менялся. */
+
+.player {
+    z-index: 10;
+    width: 420px;
+    height: 628px;
+    margin-bottom: -200px;
+    padding: 27px;
+    border-radius: 32px;
+    background: var(--card);
+    filter: drop-shadow(15px 15px 15px rgba(0, 0, 0, 10));
+}
+
+/* --- обложка: место резервируется заранее, чтобы карточка не прыгала при загрузке --- */
+.player__cover {
+    display: flex;
+    aspect-ratio: 1 / 1;
+    border-radius: 5px;
+    background: var(--sky);
+    overflow: hidden;
+}
+
+.player__cover-img {
+    width: 100%;
+    max-width: 450px;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.35s;
+}
+
+.player__cover-img.is-loaded {
+    opacity: 1;
+}
+
+/* --- название и исполнитель: одна строка с многоточием, иначе съедается нижний отступ --- */
+.player__info {
+    padding: 33px 0 0 6px;
+}
+
+.player__title,
+.player__artist {
+    color: #FFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player__title {
+    min-height: 21px;
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 21px;
+    text-align: left;
+}
+
+.player__artist {
+    min-height: 12px;
+    padding-top: 12px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 12px;
+    text-transform: uppercase;
+}
+
+/* --- кнопки --- */
+.player__controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 32px 16px 0;
+}
+
+.btn {
+    border: 0;
+    padding: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn:focus-visible {
+    outline: 2px solid #FFF;
+    outline-offset: 4px;
+    border-radius: 6px;
+}
+
+.btn__icon {
+    height: 29px;
+}
+
+.btn__icon--small {
+    height: 18px;
+}
+
+.btn__icon--skip {
+    width: 31px;
+    height: 29px;
+}
+
+.btn__icon--play {
+    width: 31px;
+    height: 37px;
+}
+
+/* shuffle: состояние «включено» показываем яркостью иконки */
+#shuffle-btn .btn__icon {
+    opacity: 0.55;
+    transition: opacity 0.2s;
+}
+
+#shuffle-btn.is-active .btn__icon {
+    opacity: 1;
+}
+
+/* --- время и прогресс --- */
+.player__timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 40px 16px 0;
+}
+
+.time {
+    color: #FFF;
+    font-size: 12px;
+}
+
+.time--current {
+    width: 100%;
+    max-width: 25px;
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 5px;
+    margin: 0 10px;
+    border-radius: 3px;
+    background: #FFF;
+    cursor: pointer;
+    touch-action: none; /* перетаскивание пальцем не должно скроллить страницу */
+}
+
+.progress__fill {
+    height: 5px;
+    margin-left: -1px;
+    border-radius: 5px 0 0 5px;
+    background: var(--progress);
+}
+
+.progress__dot {
+    width: 10px;
+    height: 10px;
+    margin-left: -2px;
+    border-radius: 50%;
+    background: var(--progress);
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 7));
+}
+
+/* --- маленькие экраны: карточка уменьшается целиком --- */
+@media (max-width: 460px) {
+    .player {
+        zoom: 0.82;
+    }
+}
+
+@media (max-width: 380px) {
+    .player {
+        zoom: 0.7;
+    }
+}

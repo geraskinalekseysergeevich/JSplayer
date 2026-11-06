@@ -1,0 +1,201 @@
+/* Боковые панели: список треков слева, тексты песен справа */
+
+/* ---------- список треков ---------- */
+.panel {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    bottom: 24px;
+    width: 300px;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    border-radius: 24px;
+    background: var(--panel);
+    color: #FFF;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.panel__head {
+    display: flex;
+    gap: 8px;
+}
+
+.panel__search {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    outline: 0;
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFF;
+    font-size: 15px;
+}
+
+.panel__search::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.panel__search:focus-visible {
+    box-shadow: 0 0 0 2px var(--ground);
+}
+
+.panel__close {
+    display: none; /* крестик нужен только на узких экранах, где панель выезжает */
+}
+
+.panel__title {
+    margin: 16px 4px 8px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFF;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.icon-btn:focus-visible {
+    outline: 2px solid #FFF;
+    outline-offset: 2px;
+}
+
+.tracks {
+    flex: 1;
+    margin: 0 -8px;
+    padding: 0 8px;
+    list-style: none;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.track:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.track.is-active {
+    background: rgba(211, 61, 52, 0.35);
+}
+
+.track__cover {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--sky);
+    object-fit: cover;
+}
+
+.track__meta {
+    min-width: 0;
+}
+
+.track__title,
+.track__artist {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track__title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.track__artist {
+    margin-top: 2px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.tracks__empty {
+    padding: 8px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- тексты песен ---------- */
+.lyrics {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(340px, 26vw);
+    z-index: 5;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.4s;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+    mask-image: linear-gradient(transparent, #000 25%, #000 75%, transparent);
+}
+
+.lyrics.is-visible {
+    opacity: 1;
+}
+
+.lyrics__inner {
+    padding-right: 32px;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lyrics__line {
+    margin-bottom: 14px;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.35);
+    transform-origin: left center;
+    transition: color 0.3s, transform 0.3s;
+}
+
+.lyrics__line.is-active {
+    color: #FFF;
+    transform: scale(1.08);
+}
+
+/* ---------- узкие экраны: список выезжает слева, тексты скрыты ---------- */
+@media (max-width: 1100px) {
+    .lyrics {
+        display: none;
+    }
+
+    .panel {
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(340px, 88vw);
+        border-radius: 0 24px 24px 0;
+        transform: translateX(-105%);
+        transition: transform 0.3s;
+    }
+
+    .panel.is-open {
+        transform: none;
+    }
+
+    .panel__close {
+        display: block;
+    }
+}

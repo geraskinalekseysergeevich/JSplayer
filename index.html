@@ -3,115 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equalizer</title>
-    <link rel="shortcut icon" href="#">
-    <link rel="stylesheet" href="style.css">
+    <title>JSplayer</title>
+    <meta name="description" content="Music player with a live audio visualizer. Free tracks from Audius, synced lyrics from LRCLIB.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233C1616'/%3E%3Cpath d='M9 22V10m5 12V6m5 16V13m5 9V9' stroke='%23D33D34' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/player.css">
+    <link rel="stylesheet" href="css/panels.css">
+    <link rel="stylesheet" href="css/widgets.css">
 </head>
 <body>
-    <div class="wrapper">
-        <div class="upper">
-            <div class="visual first_part">
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-            </div>
-            <div class="player sounded">
-                <div class="song_img"><img class="song_img_src" src="imgs/queen.svg" alt=""></div>
-                <div class="song_data">
-                    <div class="song_title">Title</div>
-                    <div class="autor">Autor</div>
+    <canvas id="scene" class="scene" aria-hidden="true"></canvas>
+
+    <main class="stage">
+        <div class="stage__card">
+            <section class="player" aria-label="Player">
+                <div class="player__cover"><img class="player__cover-img" alt=""></div>
+                <div class="player__info">
+                    <div class="player__title">&nbsp;</div>
+                    <div class="player__artist">&nbsp;</div>
                 </div>
-                <audio class='audio' src="queen.mp3"></audio>
-                <div class="buttons">
-                    <div class="btn shuffle"><img class="btn_img shuffle_btn" src="icons/shuffle.svg" alt=""></div>
-                    <div class="btn prev"><img class="btn_img prev_img" src="icons/prev.svg" alt=""></div>
-                    <div class="btn play"><img class="btn_img play_btn" src="icons/play.svg" alt=""></div>
-                    <div class="btn next"><img class="btn_img next_img" src="icons/next.svg" alt=""></div>
-                    <div class="btn sound"><img class="btn_img sound_btn" src="icons/soundon.svg" alt=""></div>
+                <audio id="audio" preload="metadata"></audio>
+                <div class="player__controls">
+                    <button class="btn" id="shuffle-btn" type="button" aria-label="Shuffle" aria-pressed="false">
+                        <img class="btn__icon btn__icon--small" src="assets/icons/shuffle.svg" alt="">
+                    </button>
+                    <button class="btn" id="prev-btn" type="button" aria-label="Previous track">
+                        <img class="btn__icon btn__icon--skip" src="assets/icons/prev.svg" alt="">
+                    </button>
+                    <button class="btn" id="play-btn" type="button" aria-label="Play or pause">
+                        <img class="btn__icon btn__icon--play" src="assets/icons/play.svg" alt="">
+                    </button>
+                    <button class="btn" id="next-btn" type="button" aria-label="Next track">
+                        <img class="btn__icon btn__icon--skip" src="assets/icons/next.svg" alt="">
+                    </button>
+                    <button class="btn" id="sound-btn" type="button" aria-label="Mute">
+                        <img class="btn__icon btn__icon--small" src="assets/icons/soundon.svg" alt="">
+                    </button>
                 </div>
-                <div class="timeline">
-                    <div class="current_time time">0:00</div>
-                    <div class="progress_bar">
-                        <div class="progress"></div>
-                        <div class="dot"></div>
+                <div class="player__timeline">
+                    <div class="time time--current">0:00</div>
+                    <div class="progress">
+                        <div class="progress__fill"></div>
+                        <div class="progress__dot"></div>
                     </div>
-                    <div class="duration time">4:23</div>
+                    <div class="time time--total">0:00</div>
                 </div>
-            </div>
-            <div class="visual second_part">
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-                <div class="line_container"><div class="line"></div></div>
-            </div>
+            </section>
         </div>
-        <div class="lower"></div>
+        <div class="stage__spacer"></div>
+    </main>
+
+    <aside class="panel" id="track-panel" aria-label="Tracks">
+        <div class="panel__head">
+            <input class="panel__search" id="search-input" type="search" placeholder="Search tracks…" autocomplete="off" aria-label="Search tracks">
+            <button class="icon-btn panel__close" id="panel-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="panel__title" id="list-title">Trending</div>
+        <ul class="tracks" id="track-list"></ul>
+    </aside>
+
+    <aside class="lyrics" id="lyrics" aria-label="Lyrics">
+        <div class="lyrics__inner"></div>
+    </aside>
+
+    <div class="modes" id="modes" role="toolbar" aria-label="Visualizer mode">
+        <button class="modes__btn" type="button" data-mode="bars">Bars</button>
+        <button class="modes__btn" type="button" data-mode="wave">Wave</button>
+        <button class="modes__btn" type="button" data-mode="radial">Radial</button>
+        <button class="modes__btn" type="button" data-mode="sparks">Sparks</button>
     </div>
-    <script src="script.js"></script>
+
+    <button class="fab" id="panel-open" type="button">Tracks</button>
+    <div class="credits">
+        Music: <a href="https://audius.co" target="_blank" rel="noopener">Audius</a>
+        &middot; Lyrics: <a href="https://lrclib.net" target="_blank" rel="noopener">LRCLIB</a>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
