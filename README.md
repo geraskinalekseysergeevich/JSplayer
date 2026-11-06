@@ -4,7 +4,7 @@ A music player with a live audio visualizer. Vanilla JS, no build step, no depen
 
 Tracks, cover art and synced lyrics are streamed from free public APIs, so there are no media files in the repo.
 
-![JSplayer](screen/bars.png)
+![JSplayer](docs/screenshots/bars.png)
 
 ## Visualizer modes
 
@@ -12,11 +12,11 @@ Switch with the buttons in the bottom right corner or the `V` key.
 
 | Bars | Wave |
 |---|---|
-| ![Bars](screen/bars.png) | ![Wave](screen/wave.png) |
+| ![Bars](docs/screenshots/bars.png) | ![Wave](docs/screenshots/wave.png) |
 | **Radial** | **Sparks** |
-| ![Radial](screen/radial.png) | ![Sparks](screen/sparks.png) |
+| ![Radial](docs/screenshots/radial.png) | ![Sparks](docs/screenshots/sparks.png) |
 
-The player card keeps its original design (see `Design.fig`). Everything around it is new.
+The player card keeps its original design. Everything around it is new.
 
 ## Features
 
@@ -30,13 +30,13 @@ The player card keeps its original design (see `Design.fig`). Everything around 
 
 ## Run
 
-No build needed. Serve the folder with any static server:
+No build and no install. The code uses ES modules, so serve the folder with any static server (opening `index.html` from disk will not work):
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Open http://localhost:8000. Opening `index.html` directly also works.
+Open http://localhost:8000.
 
 Music starts only after a click: browsers block autoplay with sound.
 
@@ -63,15 +63,35 @@ Jamendo is wired in but **off by default**: its audio server does not send CORS 
 | `V` | next visualizer mode |
 | `/` | focus search |
 
+## Project structure
+
+```
+index.html
+css/
+  layout.css      page, scene and card position
+  player.css      the player card
+  panels.css      track list and lyrics panels
+  widgets.css     mode switcher, toast, small elements
+js/
+  main.js         entry point, wires everything together
+  player.js       playback engine: queue, volume, audio analyser (no DOM)
+  player-ui.js    binds the engine to the card
+  track-list.js   track list, search, mobile drawer
+  controls.js     mode switcher, keyboard, media keys
+  lyrics.js       synced lyrics from LRCLIB
+  dom.js          every DOM lookup in one place
+  music/          one module per service, merged in index.js
+  visualizer/     canvas scene: analysis, palette, one file per mode
+assets/           fonts and icons
+docs/screenshots/ README images
+```
+
 ## How it works
 
-- `api.js`: provider layer that normalizes every source to one track shape
-- `visualizer.js`: canvas scene driven by a Web Audio `AnalyserNode` (log-spaced frequency bands, smoothing, bass-based beat detection, dominant hue extraction from cover art)
-- `lyrics.js`: LRCLIB lookup and time-synced scrolling
-- `script.js`: player logic and UI wiring
-- `style.css`: the player card (original design); `ui.css`: everything around it
-
-The Web Audio analyser needs CORS-enabled audio, which is why the audio source matters.
+- The audio element feeds a Web Audio `AnalyserNode`. `visualizer/` turns the spectrum into 72 log-spaced bands, smooths them, detects beats from bass jumps and hands drawing to the selected mode.
+- The dominant hue of the cover art (`visualizer/palette.js`) becomes the scene palette.
+- Every music service returns tracks in one shape, so adding a source means adding one file in `js/music/`.
+- The Web Audio analyser needs CORS-enabled audio, which is why the audio source matters.
 
 ## Performance notes
 

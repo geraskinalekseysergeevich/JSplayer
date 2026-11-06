@@ -1,0 +1,122 @@
+/* Мелкие элементы поверх сцены: переключатель режимов, кнопка списка, подпись, уведомление */
+
+.modes {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 16px;
+    background: var(--panel);
+}
+
+.modes__btn {
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.modes__btn:hover {
+    color: #FFF;
+}
+
+.modes__btn.is-active {
+    background: rgba(255, 255, 255, 0.16);
+    color: #FFF;
+}
+
+.modes__btn:focus-visible {
+    outline: 2px solid #FFF;
+    outline-offset: 2px;
+}
+
+/* Открывает список треков на узких экранах */
+.fab {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 20;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--panel);
+    color: #FFF;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.fab:focus-visible {
+    outline: 2px solid #FFF;
+    outline-offset: 2px;
+}
+
+.credits {
+    position: fixed;
+    left: 24px;
+    bottom: 6px;
+    z-index: 21;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+}
+
+.credits a {
+    color: inherit;
+    pointer-events: auto;
+}
+
+.toast {
+    position: fixed;
+    left: 50%;
+    top: 20px;
+    z-index: 30;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: var(--card);
+    color: #FFF;
+    font-size: 14px;
+    transform: translate(-50%, -140%);
+    transition: transform 0.3s;
+    pointer-events: none;
+}
+
+.toast.is-visible {
+    transform: translate(-50%, 0);
+}
+
+@media (max-width: 1100px) {
+    .fab {
+        display: block;
+    }
+
+    /* пока список открыт, кнопка его открытия не нужна и перекрывала бы поиск */
+    .has-open-panel .fab {
+        display: none;
+    }
+
+    .credits {
+        left: 16px;
+    }
+}
+
+@media (max-width: 460px) {
+    .modes {
+        left: 8px;
+        right: 8px;
+        bottom: 24px;
+        justify-content: space-between;
+    }
+
+    .modes__btn {
+        padding: 8px;
+        font-size: 12px;
+    }
+}
